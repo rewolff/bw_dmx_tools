@@ -24,13 +24,20 @@ int main (int argc, char **argv)
   printf ("echo 0\n");
 
   while (1) {
-    int i;
-
+    int i, m;
+    
     for (i=1;i<513;i++) {
       if (olddata[i] == dmxdata[i]) continue;
 
       sprintf (tmpbuf, "dmx %d", i);
-      for (int j=0;j<16;j++) {
+
+      // We do (max) 16 locations in one command. With max 4 chars 
+      // per channel, that's 64, so we're staying below the 80, 0x80 
+      // or whatever the limit is in the firmware... 
+      for (m=15;m>0;m--) 
+	if (olddata[i+m] != dmxdata[i+m]) break;
+      m++; // current pos differs, so increment to first doesn't differ pos. 
+      for (int j=0;(j<m) && ((i+j) < 513) ;j++) {
 	olddata[i+j] = dmxdata[i+j];
 	sprintf (tmpbuf+strlen (tmpbuf), " %d", olddata[i+j]);
       }
