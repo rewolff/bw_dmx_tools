@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
+#include "libdmx.h"
 
 int base = 14;
 unsigned char *dmxdata;
@@ -33,7 +34,8 @@ void doit (int a, int b)
 int main (int argc, char **argv)
 {
   if (argc > 1) base = atoi (argv[1]);
-  dmxdata = open_dmx ("dmxdata");
+
+  dmxdata = open_dmx ();
 
   set (10, 0);
   set (11, 0);

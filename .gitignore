@@ -2,7 +2,6 @@
 bw_dmx
 dmx_uart
 dmx_udp
-dmxdata
 makechar
 mon_dmx
 run_dmx
@@ -13,6 +12,7 @@ test_lamp
 walk
 dmx2ola
 dmx_random
+mkdmx
 \#*#
 .#*
 *.o

@@ -6,17 +6,18 @@
 #include <sys/mman.h>
 
 
+#include "libdmx.h"
+
 unsigned char *dmxdata;
 
+int minpos = 0;
+int maxpos = 512;
 
 void set (int p, int v)
 {
    if (p < 0) return;
    if (p > 63) return;
-
-//   printf ("%d %d.\n", p, v);
    dmxdata[p+1] = v;
-
 }
 
 
@@ -24,18 +25,22 @@ int main (int argc, char **argv)
 {
   int w = 10;
   int p, i;
-  dmxdata = open_dmx ("dmxdata");
+  int s; 
 
+  dmxdata = open_dmx ();
+
+  s = maxpos-minpos;
 
   while (1) {
-     for (p=-w;p<64+w;p++) {
-        for (i=-w;i<= 0;i++)
-           set (p+i, 255+i*(255/w));
+     for (p=-w;p<s+w;p++) {
+        for (i=-w;i <= 0;i++)
+           set (minpos+p+i, 255+i*(255/w));
         for (;i <= w;i++)
-           set (p+i, 255-i*(255/w));
-        usleep (40000);
+           set (minpos+p+i, 255-i*(255/w));
+        usleep (20000);
      }
   }
+
 }
 
 

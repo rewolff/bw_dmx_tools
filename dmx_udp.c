@@ -9,6 +9,8 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
+#include "libdmx.h"
+
 
 #define BUF_SIZE 0x200
 
@@ -18,11 +20,9 @@ int main(int argc, char **argv)
   struct addrinfo *result, *rp;
   int sfd, s;
   size_t len;
-  char *data;
-  char tdata[0x280];
-  char *dmxdataname;
+  unsigned char *data;
+  unsigned char tdata[0x280];
   char *port, *host;
-  int infd;
   int offset = 0;
 
   if ((argc > 2) && (strcmp (argv[1], "-o") == 0)) {
@@ -39,22 +39,7 @@ int main(int argc, char **argv)
   if (argc > 2) port = argv[2];
   else          port = "6454";
 
-  if (argc > 3) 
-    dmxdataname = argv[3];
-  else 
-    dmxdataname = "dmxdata"; 
-
-  infd = open (dmxdataname, O_RDWR); 
-  if (infd < 0) {
-    perror (dmxdataname);
-    exit (1);
-  }
-
-  data = mmap (NULL, 0x201, PROT_READ | PROT_WRITE, MAP_SHARED, infd, 0);
-  if (data == NULL) {
-    perror ("mmap");
-    exit (1);
-  }
+  data = open_dmx ();
   
   /* Obtain address(es) matching host/port */
 
