@@ -5,26 +5,17 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <sys/mman.h>
+
+
+#include "libdmx.h"
 
 int main (int argc, char **argv)
 {
-  char *thefile;
   unsigned char *data, tdata[0x200];
-  int i, infd;
+  int i;
 
-  if (argc > 1) 
-     thefile = argv[1];
-  else
-     thefile = "dmxdata";
+  data = open_dmx ();
 
-  infd = open (thefile, O_RDWR); 
-  if (infd < 0) {
-     perror (thefile);
-     exit (1);
-  }
-
-  data = mmap (NULL, 0x201, PROT_READ | PROT_WRITE, MAP_SHARED, infd, 0);
   //  printf ("data=%p.\n", data);
   //dmxmode = DMX_TX;
   while (1) {

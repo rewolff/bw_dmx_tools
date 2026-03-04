@@ -1,4 +1,4 @@
 
 
-char *open_dmx (char *fname);
+unsigned char *open_dmx (void);
 

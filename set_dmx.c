@@ -10,7 +10,7 @@
 
 int main (int argc, char **argv) 
 {
-  char *dmxdata;
+  unsigned char *dmxdata;
   int start;
   int nn;
 
@@ -20,7 +20,7 @@ int main (int argc, char **argv)
     exit (1);
   }
 
-  dmxdata = open_dmx ("dmxdata");
+  dmxdata = open_dmx ();
   
   start = atoi (argv[1]); 
   char *p = strchr (argv[1], '-');

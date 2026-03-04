@@ -11,9 +11,9 @@
 
 int main (int argc, char **argv) 
 {
-  char *dmxdata;
+  unsigned char *dmxdata;
 
-  dmxdata = open_dmx ("dmxdata");
+  dmxdata = open_dmx ();
 
   while (1) {
     for (int i=0;i<64;i++)

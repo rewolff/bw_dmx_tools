@@ -11,4 +11,8 @@ set_output
 slowrun
 test_lamp
 walk
+dmx2ola
+dmx_random
 \#*#
+.#*
+*.o

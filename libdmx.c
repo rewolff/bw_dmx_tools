@@ -12,9 +12,21 @@
 
 
 
-char *open_dmx (char *fname)
+char *open_dmx (void)
 {
   int infd;
+  char *fname;
+  int universe = 0;
+  char fnamebuf[256];
+
+  if (getenv ("DMXDATA")) fname = getenv ("DMXDATA");
+  else {
+    if (getenv ("DMX_UNIVERSE")) universe = atoi (getenv("DMX_UNIVERSE"));
+    sprintf (fnamebuf, "%s/.dmx/universe%d", 
+	     getenv ("HOME"), 
+	     universe);
+    fname = fnamebuf;
+  }
 
   infd = open (fname, O_RDWR); 
   if (infd < 0) {
