@@ -11,113 +11,76 @@
 #define _GNU_SOURCE
 
 
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <errno.h>
 #include <string.h>
-#include <termios.h>
-#include <sys/mman.h>
 
-struct termios2 {
-    tcflag_t c_iflag;
-    tcflag_t c_oflag;
-    tcflag_t c_cflag;
-    tcflag_t c_lflag;
-    cc_t c_line;
-    cc_t c_cc[19];
-    speed_t c_ispeed;
-    speed_t c_ospeed;
-};
-
-#ifndef BOTHER
-#define BOTHER 0x1000
-#endif
+#include <sys/ioctl.h>
+#include <asm/termbits.h>   /* termios2, BOTHER, TCGETS2, TCSETS2, etc. */
 
 
-extern int tcgetattr (int __fd, struct termios *__termios_p) __THROW;
-extern void cfmakeraw (struct termios *__termios_p) __THROW;
-extern int tcsetattr (int __fd, int __optional_actions,
-                      const struct termios *__termios_p) __THROW;
-
+#include "libdmx.h"
 
 
 int main (int argc, char **argv)
 {
-  char *thefile;
-  char *data;
-  int infd, uartfd;
+  //char *thefile;
+  unsigned char *data;
+  int uartfd;
   char *theuart = "/dev/ttyAMA0";
-  struct termios my_tios;
+  int gap = 10000; // 1ms. 
   struct termios2 tio;
 
+  data = open_dmx ();
 
-  thefile = argv[1];
-  infd = open (thefile, O_RDWR); 
-  if (infd < 0) {
-     perror (thefile);
-     exit (1);
-  }
-  data = mmap (NULL, 0x200, PROT_READ | PROT_WRITE, MAP_SHARED, infd, 0);
- 
-  uartfd = open (theuart, O_RDWR);
-  if (uartfd < 0) {
-     perror (theuart);
-     exit (1);
-  }
+  if (getenv ("THEUART")) theuart = getenv ("THEUART");
 
-  if (tcgetattr(uartfd, &my_tios) < 0) {  // get current settings
-      perror ("tcgetattr");
-      exit (1);
-  } 
+  uartfd = open(theuart, O_RDWR | O_NOCTTY);
+  if (uartfd < 0) fatal("open %s", theuart);
 
-  cfmakeraw(&my_tios);  // make it a binary data port
-  my_tios.c_cflag |= CLOCAL;    // port is local, no flow control
-  my_tios.c_cflag &= ~CSIZE;
-  my_tios.c_cflag |= CS8;       // 8 bit chars
-  my_tios.c_cflag &= ~PARENB;   // no parity
-  my_tios.c_cflag |= CSTOPB;    // 2 stop bit for DMX
-  my_tios.c_cflag &= ~CRTSCTS;  // no CTS/RTS flow control
+  if (ioctl(uartfd, TCGETS2, &tio) < 0) fatal("tcgets2 (get)");
 
-  if (tcsetattr(uartfd, TCSANOW, &my_tios) < 0) {  // apply settings
-    perror ("tcsetattr");
-    exit (1);
-  }
+  /* cfmakeraw equivalent */
+  tio.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+  tio.c_oflag &= ~OPOST;
+  tio.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+  tio.c_cflag &= ~(CSIZE | PARENB);
+  tio.c_cflag |=  CS8;
 
-  static int rate = 250000;
+  /* Your DMX port settings */
+  tio.c_cflag |=  CLOCAL;          /* local, no modem control */
+  tio.c_cflag &= ~CRTSCTS;         /* no RTS/CTS */
+  tio.c_cflag |=  CSTOPB;          /* 2 stop bits for DMX */
+  tio.c_cflag &= ~PARENB;          /* no parity (redundant but explicit) */
 
-  if (ioctl(uartfd, TCGETS2, &tio) < 0) {
-    perror ("tcgets2");
-    exit (1);
-  }
-
+  /* Custom baud rate */
   tio.c_cflag &= ~CBAUD;
-  tio.c_cflag |= BOTHER;
-  tio.c_ispeed = rate;
-  tio.c_ospeed = rate;  // set custom speed directly
-  if (ioctl(uartfd, TCSETS2, &tio) < 0) {
-    perror ("tcsets2");
-    exit (1);
-  }
+  tio.c_cflag |=  BOTHER;
+  tio.c_ispeed = 250000;
+  tio.c_ospeed = 250000;
+
+  /* Read behaviour: block until at least 1 byte */
+  tio.c_cc[VMIN]  = 1;
+  tio.c_cc[VTIME] = 0;
+
+  if (ioctl(uartfd, TCSETS2, &tio) < 0) fatal("tcsets2 (set)");
 
   while (1) {
-    if (ioctl(uartfd, TIOCSBRK, NULL)  < 0) {
-       perror ("TIOCCBRK");
-       exit (1);
-    }
+    if (ioctl(uartfd, TIOCSBRK, NULL)  < 0) fatal ("TIOCCBRK");
     usleep (100);
-    if (ioctl(uartfd, TIOCCBRK, NULL)  < 0) {
-       perror ("TIOCSBRK");
-       exit (1);
-    }
+    if (ioctl(uartfd, TIOCCBRK, NULL)  < 0) fatal ("TIOCSBRK");
     usleep (10);
-    if (write (uartfd, data, 0x200) < 0) {
-       perror ("write");
-       exit (1);
-    }
-    usleep (rate);
+    if (write (uartfd, data, 0x201) < 0) fatal ("write");
+
+    // Note that on Linux the write effectively returns immediately. 
+    // So we need to wait for the output to drain. 
+    if (tcdrain(uartfd) < 0) fatal("tcdrain");
+
+    // then we can sleep for the gap time. 
+    usleep (gap);
   }
 }

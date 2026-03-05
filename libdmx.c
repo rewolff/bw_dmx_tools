@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 
 #include "libdmx.h"
 
@@ -26,7 +27,6 @@ volatile void fatal ( char *s,...)
         fprintf (stderr,"%s\n",buf);
     exit (1);
 }
-
 
 
 
@@ -55,3 +55,27 @@ unsigned char *open_dmx (void)
 
   return data;
 }
+
+
+
+
+int mkuniverse (int universe)
+{
+  int fd, rv;
+  char fname[128];
+
+  sprintf (fname, "%s/.dmx", getenv ("HOME"));
+  rv = mkdir (fname, 0777);
+
+  (void) rv; // If the mkdir failed, the directory probably alredy existed. 
+
+  sprintf (fname, "%s/.dmx/universe%d", getenv ("HOME"), universe);
+  fd = open (fname, O_CREAT | O_WRONLY, 0666);
+  if (fd < 0) fatal ("opening %s", fname);
+
+  if (ftruncate (fd, 0x201) < 0) fatal ("ftruncate %s", fname);
+  close (fd);
+
+  return 0; 
+}
+
