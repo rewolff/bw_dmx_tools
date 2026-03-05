@@ -9,23 +9,17 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
+#include "libdmx.h"
 
-static char *thefile = "dmxfile";
 static int offset = 1;
 enum dsize_t {DS_SHORT, DS_BYTE, DS_WORD} dsize;
 
 static int dlen[] = {2,1,4};
 
-static void pabort(const char *s)
-{
-  perror(s);
-  exit(1);
-}
 
 static const struct option lopts[] = {
 
   // SPI options. 
-  { "file",    1, 0, 'f' },
   { "offset",  1, 0, 'o' },
   { "short",   0, 0, 's' },
   { "byte",    0, 0, 'b' },
@@ -46,7 +40,6 @@ static int parse_opts(int argc, char *argv[])
       break;
     
     switch (c) {
-    case 'f':thefile=strdup (optarg);break;
     case 'o':offset = atoi (optarg);break;
     case 's':dsize = DS_SHORT;break;
     case 'b':dsize = DS_BYTE;break;
@@ -59,23 +52,12 @@ static int parse_opts(int argc, char *argv[])
 
 int main (int argc, char **argv)
 {
-  int nonoptions, i , v, infd;
-  char *data;
+  int nonoptions, i , v;
+  unsigned char *data;
 
   nonoptions = parse_opts(argc, argv);
   
-  infd = open(thefile, O_RDWR);
-  if (infd < 0)
-    pabort("can't open dxmfile");
-
-  infd = open (thefile, O_RDWR); 
-  if (infd < 0) {
-    perror (thefile);
-    exit (1);
-  }
-  data = mmap (NULL, 0x201, PROT_READ | PROT_WRITE, MAP_SHARED, infd, 0);
-
-  if (!data) pabort ("mmap");
+  data = open_dmx ();
 
   for (i=nonoptions;i<argc;i++) {
     v = strtol (argv[i], NULL, 0);

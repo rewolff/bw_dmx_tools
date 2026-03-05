@@ -12,7 +12,9 @@ test_lamp
 walk
 dmx2ola
 dmx_random
+dmx_usb
 mkdmx
 \#*#
 .#*
+.nfs*
 *.o

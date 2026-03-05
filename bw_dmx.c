@@ -1,8 +1,8 @@
 /*
  * bw_dmx.c. 
  *
- * Control the BitWizard SPI and I2C expansion boards on
- * Linux computers with spidev or i2c-dev. 
+ * Control the BitWizard SPI DMX boards on
+ * Linux computers with spidev.
  *
  * based on: 
  * SPI testing utility (using spidev driver)
