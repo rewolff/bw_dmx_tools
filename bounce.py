@@ -16,8 +16,8 @@ def main():
     if not (1 <= args.min <= 512) or not (1 <= args.max <= 512):
         print("Error: channels must be between 1 and 512")
         return
-    if args.min > args.max:
-        print("Error: min cannot be greater than max")
+    if args.min >= args.max:
+        print("Error: min must be less than max")
         return
 
     # Use the class directly
@@ -25,8 +25,7 @@ def main():
     current = args.min
     direction = 1  # 1 = up, -1 = down
     for ch in range(args.min, args.max + 1):
-        if ch != current:
-            uni[ch] = 0
+       uni[ch] = 0
 
     try:
         while True:

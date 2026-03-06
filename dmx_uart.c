@@ -34,6 +34,7 @@ int main (int argc, char **argv)
   char *theuart = "/dev/ttyAMA0";
   int gap = 10000; // 1ms. 
   struct termios2 tio;
+  int dmxsize = 0x201;
 
   data = open_dmx ();
 
@@ -74,13 +75,28 @@ int main (int argc, char **argv)
     usleep (100);
     if (ioctl(uartfd, TIOCCBRK, NULL)  < 0) fatal ("TIOCSBRK");
     usleep (10);
-    if (write (uartfd, data, 0x201) < 0) fatal ("write");
+    if (write (uartfd, data, dmxsize) < 0) fatal ("write");
 
     // Note that on Linux the write effectively returns immediately. 
-    // So we need to wait for the output to drain. 
-    if (tcdrain(uartfd) < 0) fatal("tcdrain");
+    // So we need to wait for the output to drain. .... 
 
+    //if (tcdrain(uartfd) < 0) fatal("tcdrain");
+    //if (ioctl(uartfd, TIOCCBRK, NULL)  < 0) fatal ("TIOCSBRK");
     // then we can sleep for the gap time. 
-    usleep (gap);
+    // usleep (gap);
+
+
+    //    ... however Linux does something weird: If we ask it to
+    //    drain, // it checks if it can return immediately. That's not
+    //    going to be the case. // THEN it sleeps for "much longer
+    //    than what we expect" and checks again. So actually asking
+    //    Linux to drain the uart is not really an option. 
+
+    // Workaround: We need to assume the write returns immediately, 
+    // and we calculate the time from the start of transmitting the 
+    // DMX data. 
+    int tt;
+    tt = (1+8+2) * 4 * dmxsize + gap;
+    usleep (tt);
   }
 }

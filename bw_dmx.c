@@ -59,18 +59,6 @@ static uint8_t bits = 8;
 static uint32_t speed = 6000000;
 static int delay = 0;
 static int wait = 22000;
-//static int addr = 0x82;
-//static int text = 0;
-//static char *monitor_file;
-//static int readmode = 0;
-
-//static int reg = -1;
-//static long long val = -1;
-//static int cls = 0;
-//static int write8mode, writemiscmode, ident, readee;
-//static int scan = 0;
-//static int hexmode = 0;
-//static char numberformat = 'x';
 
 static int debug = 0;
 #define DEBUG_REGSETTING 0x0001
